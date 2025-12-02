@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story Insight: Script &amp; Screenplay Expert System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+  <header class="bg-white shadow-sm">
+    <div class="mx-auto max-w-6xl px-4 py-6">
+      <h1 class="text-3xl font-semibold text-indigo-700">Story Insight: Script &amp; Screenplay Expert System</h1>
+      <p class="mt-1 text-sm text-slate-500">Prototype interface for evaluating scripts with a future expert system.</p>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-8 space-y-6">
+    <section class="grid gap-6 lg:grid-cols-2">
+      <!-- Input Column -->
+      <section class="space-y-6">
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <header class="mb-4">
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Input</p>
+            <h2 class="text-xl font-semibold text-slate-900">Script / Screenplay Text</h2>
+          </header>
+          <form id="scriptForm" class="space-y-4">
+            <div>
+              <label for="scriptText" class="sr-only">Script / Screenplay Text</label>
+              <textarea id="scriptText" rows="12"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none"
+                placeholder="Paste your screenplay or story text here..."></textarea>
+              <p id="textWarning" class="mt-2 hidden text-sm text-red-500">Please paste a script before analyzing.</p>
+              <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span id="charCount">0 characters</span>
+                <span id="wordCount">0 words</span>
+              </div>
+            </div>
+            <button id="analyzeBtn" type="submit"
+              class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2">
+              Analyze Story
+            </button>
+          </form>
+          <p id="analysisStatus" class="mt-3 text-sm text-slate-500"></p>
+        </div>
+
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <header class="mb-4">
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Story Metadata (Optional)</p>
+            <h2 class="text-xl font-semibold text-slate-900">Context &amp; Details</h2>
+          </header>
+          <div class="grid gap-4">
+            <div>
+              <label for="genre" class="mb-1 block text-sm font-medium text-slate-700">Genre</label>
+              <select id="genre"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>Drama</option>
+                <option>Comedy</option>
+                <option>Thriller</option>
+                <option>Sci-Fi</option>
+                <option>Fantasy</option>
+              </select>
+            </div>
+            <div>
+              <label for="length" class="mb-1 block text-sm font-medium text-slate-700">Length</label>
+              <select id="length"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>Short Film</option>
+                <option>Feature</option>
+                <option>Pilot</option>
+                <option>Episode</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="mood" class="mb-1 block text-sm font-medium text-slate-700">Mood / Tone</label>
+              <input id="mood" type="text" placeholder="Coming-of-age drama"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none" />
+            </div>
+            <div>
+              <label for="audience" class="mb-1 block text-sm font-medium text-slate-700">Target Audience</label>
+              <select id="audience"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>Kids</option>
+                <option>YA</option>
+                <option>Adult</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div>
+              <label for="setting" class="mb-1 block text-sm font-medium text-slate-700">Setting</label>
+              <input id="setting" type="text" placeholder="Urban dystopia"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analysis Column -->
+      <section class="space-y-6">
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <header class="mb-4">
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Analysis Results</p>
+            <h2 class="text-xl font-semibold text-slate-900">Overall Story Snapshot</h2>
+          </header>
+          <div class="rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 text-indigo-900">
+            <p class="text-4xl font-bold" id="overallScore">—</p>
+            <p class="mt-1 text-sm text-indigo-700">Average score across expert categories.</p>
+            <p class="mt-3 text-sm" id="overallSummary">
+              This is placeholder overall feedback. In the future, an expert system will summarize key strengths and
+              opportunities based on your story’s emotional impact, character depth, and narrative resolution.
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <header class="mb-4">
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Story Feedback Overview</p>
+            <h2 class="text-xl font-semibold text-slate-900">Category Scores</h2>
+          </header>
+          <div id="scoresGrid" class="grid gap-4 sm:grid-cols-2">
+            <!-- Score cards injected here -->
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <header class="mb-4">
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Expert Rules Checklist</p>
+            <h2 class="text-xl font-semibold text-slate-900">Story Evaluation Rules</h2>
+          </header>
+          <ul id="rulesList" class="space-y-4">
+            <!-- Rules injected via JS -->
+          </ul>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-slate-500">
+      Prototype UI &mdash; connect your expert system backend for real insights.
+    </div>
+  </footer>
+
+  <script>
+    const scriptText = document.getElementById('scriptText');
+    const charCount = document.getElementById('charCount');
+    const wordCount = document.getElementById('wordCount');
+    const form = document.getElementById('scriptForm');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const textWarning = document.getElementById('textWarning');
+    const analysisStatus = document.getElementById('analysisStatus');
+    const scoresGrid = document.getElementById('scoresGrid');
+    const overallScoreEl = document.getElementById('overallScore');
+    const overallSummaryEl = document.getElementById('overallSummary');
+    const rulesList = document.getElementById('rulesList');
+
+    const categories = [
+      'Emotion',
+      'Character Depth',
+      'Human Experience',
+      'Symbolism & Motifs',
+      'Conflict & Resolution',
+      'Sensory Immersion',
+      'Authenticity / Originality',
+      'Dynamic Rhythm / Pacing',
+      'Audience Fit',
+      'Moral Resonance / Thematic Impact'
+    ];
+
+    const rules = [
+      {
+        title: 'Emotion First Rule',
+        description: 'Every story must evoke at least one dominant emotion (joy, fear, hope, or sorrow) and maintain emotional continuity throughout the narrative.'
+      },
+      {
+        title: 'Character Depth Rule',
+        description: 'Characters should possess goals, flaws, and growth arcs that evolve naturally through conflict and consequence.'
+      },
+      {
+        title: 'Human Experience Rule',
+        description: 'Ground every story in universal human experiences (love, loss, ambition, and identity) so that even the most fantastical tales feel relatable.'
+      },
+      {
+        title: 'Symbolism Rule',
+        description: 'Use recurring symbols, metaphors, or motifs to give deeper meaning to surface events and connect abstract ideas to emotional truth.'
+      },
+      {
+        title: 'Contextual Adaptation Rule',
+        description: 'Adjust tone, pacing, and language style based on the intended audience.'
+      },
+      {
+        title: 'Conflict and Resolution Rule',
+        description: 'Every narrative must contain tension that challenges the protagonist and culminates in a meaningful resolution.'
+      },
+      {
+        title: 'Sensory Immersion Rule',
+        description: 'Invoke vivid sensory details to create immersive worlds that draw the audience into the story’s atmosphere.'
+      },
+      {
+        title: 'Authenticity Rule',
+        description: 'Avoid clichés and predictable plotlines; instead, derive originality from genuine emotion, character motivation, and unique perspectives.'
+      },
+      {
+        title: 'Dynamic Rhythm Rule',
+        description: "Balance moments of action and reflection, dialogue and silence, so the story 'breathes' and mirrors the rhythm of real life."
+      },
+      {
+        title: 'Moral Resonance Rule',
+        description: 'End each story with an insight, question, or moral tension that lingers—something that encourages reflection beyond the final scene.'
+      }
+    ];
+
+    const updateCounts = () => {
+      const text = scriptText.value;
+      charCount.textContent = `${text.length} characters`;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      wordCount.textContent = `${words} words`;
+    };
+
+    const renderRules = () => {
+      rulesList.innerHTML = rules.map(rule => `
+        <li class="rounded-2xl border border-slate-200 p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm font-semibold text-slate-900">${rule.title}</p>
+              <p class="mt-1 text-sm text-slate-600">${rule.description}</p>
+            </div>
+            <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-600">Pending evaluation</span>
+          </div>
+        </li>
+      `).join('');
+    };
+
+    const renderScores = (scores) => {
+      scoresGrid.innerHTML = scores.map(({ category, score }) => `
+        <article class="flex flex-col rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <p class="text-sm font-semibold text-slate-900">${category}</p>
+          <p class="mt-2 text-3xl font-bold text-indigo-600">${score} / 10</p>
+          <p class="mt-2 text-sm text-slate-600">Placeholder feedback on ${category}.</p>
+        </article>
+      `).join('');
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const text = scriptText.value.trim();
+
+      if (!text) {
+        textWarning.classList.remove('hidden');
+        analysisStatus.textContent = '';
+        return;
+      }
+
+      textWarning.classList.add('hidden');
+      analysisStatus.textContent = 'Analyzing…';
+
+      // TODO: Replace dummy scoring logic with real expert system evaluation.
+      analyzeBtn.disabled = true;
+      analyzeBtn.classList.add('opacity-70');
+
+      setTimeout(() => {
+        const scores = categories.map(category => ({
+          category,
+          score: Math.floor(Math.random() * 10) + 1
+        }));
+
+        renderScores(scores);
+
+        const total = scores.reduce((sum, item) => sum + item.score, 0);
+        const average = (total / scores.length).toFixed(1);
+        overallScoreEl.textContent = `${average}`;
+        overallSummaryEl.textContent = 'This is placeholder overall feedback. Soon, Story Insight will highlight emotional resonance, character journeys, and thematic payoffs tailored to your narrative.';
+
+        analysisStatus.textContent = 'Analysis complete. Scores refreshed.';
+        analyzeBtn.disabled = false;
+        analyzeBtn.classList.remove('opacity-70');
+      }, 700);
+    });
+
+    scriptText.addEventListener('input', () => {
+      updateCounts();
+      if (scriptText.value.trim()) {
+        textWarning.classList.add('hidden');
+      }
+    });
+
+    // Initial render
+    updateCounts();
+    renderRules();
+    renderScores(categories.map(category => ({ category, score: '—' })));
+    // TODO: Evaluate expert rules once script analysis is available.
+  </script>
+</body>
+
+</html>
+
