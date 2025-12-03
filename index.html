@@ -142,13 +142,9 @@
     </section>
   </main>
 
-  <footer class="border-t border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-slate-500">
-      Prototype UI &mdash; connect your expert system backend for real insights.
-    </div>
-  </footer>
-
   <script>
+    const API_URL = 'http://127.0.0.1:5000/analyze';
+
     const scriptText = document.getElementById('scriptText');
     const charCount = document.getElementById('charCount');
     const wordCount = document.getElementById('wordCount');
@@ -161,17 +157,17 @@
     const overallSummaryEl = document.getElementById('overallSummary');
     const rulesList = document.getElementById('rulesList');
 
-    const categories = [
-      'Emotion',
-      'Character Depth',
-      'Human Experience',
-      'Symbolism & Motifs',
-      'Conflict & Resolution',
-      'Sensory Immersion',
-      'Authenticity / Originality',
-      'Dynamic Rhythm / Pacing',
-      'Audience Fit',
-      'Moral Resonance / Thematic Impact'
+    const CATEGORY_SPECS = [
+      { id: 'emotion', label: 'Emotion' },
+      { id: 'character-depth', label: 'Character Depth' },
+      { id: 'human-experience', label: 'Human Experience' },
+      { id: 'symbolism', label: 'Symbolism & Motifs' },
+      { id: 'conflict', label: 'Conflict & Resolution' },
+      { id: 'sensory', label: 'Sensory Immersion' },
+      { id: 'authenticity', label: 'Authenticity / Originality' },
+      { id: 'rhythm', label: 'Dynamic Rhythm / Pacing' },
+      { id: 'audience-fit', label: 'Audience Fit' },
+      { id: 'moral', label: 'Moral Resonance / Thematic Impact' }
     ];
 
     const rules = [
@@ -224,28 +220,67 @@
       wordCount.textContent = `${words} words`;
     };
 
-    const renderRules = () => {
+    const renderRules = (breakdown = null) => {
       rulesList.innerHTML = rules.map(rule => `
         <li class="rounded-2xl border border-slate-200 p-4">
           <div class="flex items-start justify-between">
             <div>
               <p class="text-sm font-semibold text-slate-900">${rule.title}</p>
               <p class="mt-1 text-sm text-slate-600">${rule.description}</p>
+              ${breakdown && breakdown[rule.title] ? `<p class="mt-2 text-xs text-slate-500">${breakdown[rule.title].message}</p>` : ''}
             </div>
-            <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-600">Pending evaluation</span>
+            <span class="rounded-full px-3 py-1 text-xs font-medium ${breakdown && breakdown[rule.title] ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}">
+              ${breakdown && breakdown[rule.title] ? `${breakdown[rule.title].score} / ${breakdown[rule.title].max_points}` : 'Pending evaluation'}
+            </span>
           </div>
         </li>
       `).join('');
     };
 
     const renderScores = (scores) => {
-      scoresGrid.innerHTML = scores.map(({ category, score }) => `
+      scoresGrid.innerHTML = scores.map(({ category, score, raw_score, max_points, message }) => `
         <article class="flex flex-col rounded-2xl border border-slate-200 p-4 shadow-sm">
           <p class="text-sm font-semibold text-slate-900">${category}</p>
-          <p class="mt-2 text-3xl font-bold text-indigo-600">${score} / 10</p>
-          <p class="mt-2 text-sm text-slate-600">Placeholder feedback on ${category}.</p>
+          <p class="mt-2 text-3xl font-bold text-indigo-600">${typeof score === 'number' ? score.toFixed(1) : score} / 10</p>
+          <p class="mt-1 text-xs text-slate-500">
+            ${
+              typeof raw_score === 'number' && typeof max_points === 'number'
+                ? `Rule score: ${raw_score} / ${max_points}`
+                : 'Awaiting analysis.'
+            }
+          </p>
+          <p class="mt-2 text-sm text-slate-600">${message ?? `Feedback on ${category} will appear here.`}</p>
         </article>
       `).join('');
+    };
+
+    const renderScoresFromResult = (categories = []) => {
+      renderScores(categories.map(item => ({
+        category: item.category,
+        score: item.score,
+        message: item.message,
+        raw_score: item.raw_score,
+        max_points: item.max_points
+      })));
+    };
+
+    const buildSummary = (categories = []) => {
+      if (!categories.length) {
+        return 'Provide a script to see detailed strengths, pacing, and thematic insights.';
+      }
+
+      const sorted = [...categories].sort((a, b) => b.score - a.score);
+      const strengths = sorted.slice(0, 2).map(item => item.category).join(' & ');
+      const lowest = sorted[sorted.length - 1];
+      const lowestReview = typeof lowest.message === 'string'
+        ? lowest.message.toLowerCase()
+        : 'needs additional development';
+      return `Strengths: ${strengths}. Opportunity: deepen ${lowest.category.toLowerCase()} (${lowestReview}).`;
+    };
+
+    const toggleAnalyzingState = (isAnalyzing) => {
+      analyzeBtn.disabled = isAnalyzing;
+      analyzeBtn.classList.toggle('opacity-70', isAnalyzing);
     };
 
     form.addEventListener('submit', (event) => {
@@ -260,28 +295,35 @@
 
       textWarning.classList.add('hidden');
       analysisStatus.textContent = 'Analyzing…';
+      toggleAnalyzingState(true);
 
-      // TODO: Replace dummy scoring logic with real expert system evaluation.
-      analyzeBtn.disabled = true;
-      analyzeBtn.classList.add('opacity-70');
-
-      setTimeout(() => {
-        const scores = categories.map(category => ({
-          category,
-          score: Math.floor(Math.random() * 10) + 1
-        }));
-
-        renderScores(scores);
-
-        const total = scores.reduce((sum, item) => sum + item.score, 0);
-        const average = (total / scores.length).toFixed(1);
-        overallScoreEl.textContent = `${average}`;
-        overallSummaryEl.textContent = 'This is placeholder overall feedback. Soon, Story Insight will highlight emotional resonance, character journeys, and thematic payoffs tailored to your narrative.';
-
-        analysisStatus.textContent = 'Analysis complete. Scores refreshed.';
-        analyzeBtn.disabled = false;
-        analyzeBtn.classList.remove('opacity-70');
-      }, 700);
+      fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text })
+      })
+        .then(async (response) => {
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || 'Analysis failed.');
+          }
+          return payload;
+        })
+        .then((data) => {
+          renderScoresFromResult(data.categories);
+          overallScoreEl.textContent = data.overall_score.toFixed(1);
+          overallSummaryEl.textContent = buildSummary(data.categories);
+          renderRules(data.breakdown);
+          analysisStatus.textContent = 'Analysis complete. Scores refreshed.';
+        })
+        .catch((error) => {
+          analysisStatus.textContent = error.message || 'Unable to analyze the story.';
+        })
+        .finally(() => {
+          toggleAnalyzingState(false);
+        });
     });
 
     scriptText.addEventListener('input', () => {
@@ -294,8 +336,13 @@
     // Initial render
     updateCounts();
     renderRules();
-    renderScores(categories.map(category => ({ category, score: '—' })));
-    // TODO: Evaluate expert rules once script analysis is available.
+    renderScores(CATEGORY_SPECS.map(spec => ({
+      category: spec.label,
+      score: '—',
+      raw_score: null,
+      max_points: null,
+      message: 'Awaiting analysis.'
+    })));
   </script>
 </body>
 
