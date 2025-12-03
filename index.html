@@ -60,6 +60,7 @@
               <label for="genre" class="mb-1 block text-sm font-medium text-slate-700">Genre</label>
               <select id="genre"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>N/A</option>
                 <option>Drama</option>
                 <option>Comedy</option>
                 <option>Thriller</option>
@@ -71,6 +72,7 @@
               <label for="length" class="mb-1 block text-sm font-medium text-slate-700">Length</label>
               <select id="length"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>N/A</option>
                 <option>Short Film</option>
                 <option>Feature</option>
                 <option>Pilot</option>
@@ -87,6 +89,7 @@
               <label for="audience" class="mb-1 block text-sm font-medium text-slate-700">Target Audience</label>
               <select id="audience"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option>N/A</option>
                 <option>Kids</option>
                 <option>YA</option>
                 <option>Adult</option>
@@ -131,10 +134,10 @@
 
         <div class="rounded-2xl bg-white p-6 shadow-sm">
           <header class="mb-4">
-            <p class="text-xs uppercase tracking-wide text-indigo-500">Expert Rules Checklist</p>
-            <h2 class="text-xl font-semibold text-slate-900">Story Evaluation Rules</h2>
+            <p class="text-xs uppercase tracking-wide text-indigo-500">Expert Rules Details</p>
+            <h2 class="text-xl font-semibold text-slate-900">Rule Insights</h2>
           </header>
-          <ul id="rulesList" class="space-y-4">
+          <ul id="rulesList" class="space-y-3">
             <!-- Rules injected via JS -->
           </ul>
         </div>
@@ -221,20 +224,23 @@
     };
 
     const renderRules = (breakdown = null) => {
-      rulesList.innerHTML = rules.map(rule => `
+      rulesList.innerHTML = rules.map(rule => {
+        const result = breakdown?.[rule.title];
+        const scoreText = result ? `${result.score} / ${result.max_points}` : 'Pending';
+        const badgeStyle = result ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600';
+        return `
         <li class="rounded-2xl border border-slate-200 p-4">
-          <div class="flex items-start justify-between">
+          <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-sm font-semibold text-slate-900">${rule.title}</p>
               <p class="mt-1 text-sm text-slate-600">${rule.description}</p>
-              ${breakdown && breakdown[rule.title] ? `<p class="mt-2 text-xs text-slate-500">${breakdown[rule.title].message}</p>` : ''}
             </div>
-            <span class="rounded-full px-3 py-1 text-xs font-medium ${breakdown && breakdown[rule.title] ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}">
-              ${breakdown && breakdown[rule.title] ? `${breakdown[rule.title].score} / ${breakdown[rule.title].max_points}` : 'Pending evaluation'}
+            <span class="rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle}">
+              ${scoreText}
             </span>
           </div>
-        </li>
-      `).join('');
+        </li>`;
+      }).join('');
     };
 
     const renderScores = (scores) => {
