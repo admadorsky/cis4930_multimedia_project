@@ -14,6 +14,7 @@ sentiment_model = pipeline("sentiment-analysis")
 embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 nlp = spacy.load("en_core_web_sm")
 
+# Define the categories and rules
 CATEGORY_RULES = [
     {"id": "emotion", "label": "Emotion", "rule": "Emotion First Rule", "max_points": 2},
     {"id": "character-depth", "label": "Character Depth", "rule": "Character Depth Rule", "max_points": 2},
@@ -27,8 +28,10 @@ CATEGORY_RULES = [
     {"id": "moral", "label": "Moral Resonance / Thematic Impact", "rule": "Moral Resonance Rule", "max_points": 2},
 ]
 
+# Define the metadata fields
 METADATA_FIELDS = ["genre", "length", "mood", "audience", "setting"]
 
+# Define the audience baselines (ideal range of words per sentence based on the audience)
 AUDIENCE_BASELINES = {
     None: {"optimal": (10, 22), "acceptable": (7, 28)},
     "kids": {"optimal": (6, 14), "acceptable": (4, 18)},
@@ -37,6 +40,7 @@ AUDIENCE_BASELINES = {
     "general": {"optimal": (10, 22), "acceptable": (7, 28)},
 }
 
+# Define the length adjustments (adjustment to the audience baselines based on the length of the story)
 LENGTH_ADJUSTMENTS = {
     "short film": (-2, -1),
     "feature": (3, 3),
@@ -44,11 +48,12 @@ LENGTH_ADJUSTMENTS = {
     "episode": (1, 2),
 }
 
+# Define the genres, settings, and moods that are more likely to use sensory details
 SENSORY_GENRES = {"fantasy", "sci-fi", "thriller"}
 SENSORY_SETTING_HINTS = ["forest", "ocean", "space", "city", "desert", "mountain", "rain", "storm", "battlefield"]
 REFLECTIVE_MOOD_CUES = ["reflect", "healing", "coming-of-age", "lesson", "meditative", "introspective"]
 
-
+# Add a breakdown entry to the breakdown dictionary
 def _add_breakdown_entry(breakdown: Dict[str, Dict[str, str]], rule: str, score: int, max_points: int, message: str):
     breakdown[rule] = {
         "score": score,
@@ -56,7 +61,7 @@ def _add_breakdown_entry(breakdown: Dict[str, Dict[str, str]], rule: str, score:
         "message": message,
     }
 
-
+# Data cleanup/validation function to normalize the field values
 def _normalize_field(value: Optional[str]) -> Optional[str]:
     if value is None or not isinstance(value, str):
         return None
@@ -65,7 +70,7 @@ def _normalize_field(value: Optional[str]) -> Optional[str]:
         return None
     return cleaned
 
-
+# Data cleanup/validation function to normalize the metadata values
 def _normalize_metadata(raw_metadata: Optional[Dict[str, object]]) -> Dict[str, Optional[str]]:
     raw_metadata = raw_metadata if isinstance(raw_metadata, dict) else {}
     normalized: Dict[str, Optional[str]] = {}
@@ -75,7 +80,7 @@ def _normalize_metadata(raw_metadata: Optional[Dict[str, object]]) -> Dict[str, 
         normalized[f"{field}_norm"] = field_value.lower() if field_value else None
     return normalized
 
-
+# Function to calculate the optimal and acceptable length ranges for the story based on the metadata fields defined above
 def _audience_length_ranges(metadata: Dict[str, Optional[str]]):
     audience_key = metadata.get("audience_norm")
     baseline = AUDIENCE_BASELINES.get(audience_key, AUDIENCE_BASELINES[None])
@@ -94,11 +99,11 @@ def _audience_length_ranges(metadata: Dict[str, Optional[str]]):
     acceptable = (max(2, acceptable_min), max(acceptable_min + 1, acceptable_max))
     return optimal, acceptable
 
-
+# Function to describe the format of the story based on the metadata fields defined above
 def _describe_format(metadata: Dict[str, Optional[str]]) -> str:
     return metadata.get("length") or metadata.get("genre") or "this format"
 
-
+# Function to calculate the expected number of sensory details based on the metadata fields defined above
 def _sensory_expectation(metadata: Dict[str, Optional[str]]) -> int:
     expectation = 4
     if metadata.get("genre_norm") in SENSORY_GENRES:
@@ -108,18 +113,18 @@ def _sensory_expectation(metadata: Dict[str, Optional[str]]) -> int:
         expectation += 1
     return expectation
 
-
+# Function to determine if the story is expected to have a full conflict arc based on the metadata fields defined above
 def _expects_full_conflict_arc(metadata: Dict[str, Optional[str]]) -> bool:
     return metadata.get("length_norm") in {"feature", "pilot", "episode"} or metadata.get("genre_norm") in {"thriller", "sci-fi"}
 
-
+# Function to determine if the story is expected to have a reflective ending based on the metadata fields defined above
 def _expects_reflective_ending(metadata: Dict[str, Optional[str]]) -> bool:
     if metadata.get("genre_norm") in {"drama"}:
         return True
     mood_norm = metadata.get("mood_norm") or ""
     return any(cue in mood_norm for cue in REFLECTIVE_MOOD_CUES)
 
-
+# Function to apply the rules to the story and return the score and breakdown
 def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tuple[int, Dict[str, Dict[str, str]]]:
     metadata = _normalize_metadata(metadata)
     breakdown: Dict[str, Dict[str, str]] = {}
@@ -184,6 +189,7 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
         seen_character_keys.add(key)
         characters.append(name)
 
+    # Determine the minimum number of characters required for the story based on the metadata fields defined above
     min_characters = 1
     if metadata.get("length_norm") in {"feature", "pilot", "episode"}:
         min_characters = 2
@@ -191,22 +197,11 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
         min_characters = max(min_characters, 2)
 
     format_desc = _describe_format(metadata)
-
+    
+    # Apply the Character Depth Rule to the story based on the decided minimum number of characters
     if characters:
         actions_detected = any(any(tok.pos_ == "VERB" for tok in sent) for sent in sentence_spans)
-        if len(characters) < min_characters:
-            if actions_detected:
-                points = 1
-                message = (
-                    f"Only {len(characters)} distinct character(s); {format_desc} stories typically need "
-                    f"{min_characters} active characters."
-                )
-            else:
-                points = 0
-                message = (
-                    f"Introduce at least {min_characters} distinct, goal-driven characters for {format_desc} pieces."
-                )
-        elif actions_detected:
+        if len(characters) >= min_characters and actions_detected:
             points = 2
             message = f"Characters ({', '.join(characters)}) pursue goals and take action."
         else:
@@ -241,6 +236,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
         "courage",
         "compassion",
     ]
+
+    # Apply the Human Experience Rule to the story based on the detected human keywords
     human_hits = sum(1 for word in human_keywords if word in lower_text)
     if human_hits >= 3:
         human_points = 2
@@ -262,6 +259,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     sim_scores = util.pytorch_cos_sim(embeddings, embeddings)
     repetition_count = max((sim_scores > 0.8).sum().item() - len(sentences), 0)
     repetition_ratio = repetition_count / max(len(sentences), 1)
+
+    # Apply the Symbolism Rule to the story based on the detected repetition ratio
     if repetition_ratio >= 0.4:
         symbolism_points = 2
         message = "Multiple recurring motifs suggest rich symbolism."
@@ -278,6 +277,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     # 5. Contextual Adaptation Rule
     avg_len = sum(len(s.split()) for s in sentences) / len(sentences)
     optimal_range, acceptable_range = _audience_length_ranges(metadata)
+
+    # Apply the Contextual Adaptation Rule to the story based on the average sentence length and the optimal and acceptable length ranges
     if optimal_range[0] <= avg_len <= optimal_range[1]:
         adaptation_points = 2
         message = (
@@ -312,6 +313,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     conflict_hits = sum(1 for word in conflict_words if word in lower_text)
     resolution_hits = sum(1 for word in resolution_words if word in lower_text)
     requires_full_arc = _expects_full_conflict_arc(metadata)
+
+    # Apply the Conflict and Resolution Rule to the story based on the detected conflict and resolution words and the expected full conflict arc
     if conflict_hits and resolution_hits:
         conflict_points = 2
         message = "Conflict and resolution cues detected."
@@ -339,6 +342,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     sensory_words = ["see", "hear", "touch", "smell", "taste", "bright", "dark", "cold", "warm", "shimmer", "flicker", "rough", "fragrant", "echo", "glow"]
     sensory_hits = sum(1 for word in sensory_words if word in lower_text)
     sensory_expectation = _sensory_expectation(metadata)
+
+    # Apply the Sensory Immersion Rule to the story based on the detected sensory words and the expected number of sensory details
     if sensory_hits >= sensory_expectation:
         sensory_points = 2
         message = "Sensory detail matches the vivid tone implied by the metadata."
@@ -359,6 +364,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     cliche_hits = sum(1 for c in clichés if c in lower_text)
     tokens = [token.lemma_.lower() for token in doc if token.is_alpha]
     lexical_diversity = len(set(tokens)) / max(len(tokens), 1)
+
+    # Apply the Authenticity Rule to the story based on the detected clichés and the lexical diversity
     if cliche_hits > 0:
         authenticity_points = 0
         message = "Story leans on well-known clichés; try fresh phrasing."
@@ -376,6 +383,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     # --------------------------
     # 9. Dynamic Rhythm Rule
     lengths = [len(s.split()) for s in sentences]
+
+    # Apply the Dynamic Rhythm Rule to the story based on the detected sentence lengths and their variation
     if len(lengths) <= 1:
         rhythm_points = 1
         message = "Single-sentence sample; unable to assess rhythm."
@@ -402,6 +411,8 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
     moral_keywords = ["lesson", "learn", "realize", "understand", "reflect", "question", "truth", "courage", "compassion"]
     moral_hits = sum(1 for word in moral_keywords if word in lower_text)
     expects_reflection = _expects_reflective_ending(metadata)
+
+    # Apply the Moral Resonance Rule to the story based on the detected moral keywords and the expected reflective ending
     if moral_hits >= 2:
         moral_points = 2
         message = "Reflective lesson or insight detected."
@@ -425,7 +436,7 @@ def _score_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Tup
 
     return score, breakdown
 
-
+# Function to evaluate the story and return the overall score and breakdown
 def evaluate_story(text: str, metadata: Optional[Dict[str, object]] = None) -> Dict[str, object]:
     raw_score, breakdown = _score_story(text, metadata)
     category_scores: List[Dict[str, object]] = []
@@ -448,6 +459,7 @@ def evaluate_story(text: str, metadata: Optional[Dict[str, object]] = None) -> D
             }
         )
 
+    # Calculate the overall score based on each category's score
     overall = round(
         sum(category["score"] for category in category_scores) / len(category_scores), 1
     ) if category_scores else 0
@@ -479,34 +491,13 @@ def analyze_story():
     return jsonify(result)
 
 
-def run_demo():
-    sample_story = """
-    The village slept under a sky of shimmering stars, yet Mira could not close her eyes.
-    She thought about the promise she made to her brother, about the fear in his eyes, and she finally understood the courage it took to leave.
-    """
-    sample_metadata = {"genre": "Drama", "audience": "Adult", "length": "Feature"}
-    result = evaluate_story(sample_story, sample_metadata)
-    print(f"Overall Score: {result['overall_score']}")
-    for category in result["categories"]:
-        print(
-            f"{category['category']}: {category['raw_score']} / {category['max_points']} -> {category['message']}"
-        )
-    print("\nRule Breakdown:")
-    for rule_name, details in result["breakdown"].items():
-        print(f" - {rule_name}: {details['score']} / {details['max_points']} ({details['message']})")
-
-
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Story Insight expert system API/server.")
-    parser.add_argument("--demo", action="store_true", help="Run the console demo and exit.")
     parser.add_argument("--host", default="127.0.0.1", help="Host for the API server.")
     parser.add_argument("--port", type=int, default=5000, help="Port for the API server.")
     parser.add_argument("--debug", action="store_true", help="Run the Flask server in debug mode.")
     args = parser.parse_args()
 
-    if args.demo:
-        run_demo()
-    else:
-        app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug)
