@@ -28,8 +28,19 @@
   - If spaCy model download fails, re-run `python -m spacy download en_core_web_sm`.
   - If the frontend shows `ERR_CONNECTION_REFUSED`, ensure `main.py` is running and the API URL matches the host/port.
 
-## Project Structure
+### Running the test cases (Codespaces quick path)
 
+From the repo root:
+
+```bash
+cd /workspaces/cis4930_multimedia_project
+
+python -m pip install --user --upgrade pip
+python -m pip install --user Flask flask-cors pytest
+
+python -m pytest -q
+```
+## Project Structure
 ```
 cis4930_multimedia_project/
 ├── main.py                # Flask API + scoring engine
