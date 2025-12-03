@@ -60,30 +60,38 @@
               <label for="genre" class="mb-1 block text-sm font-medium text-slate-700">Genre</label>
               <select id="genre"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
-                <option>N/A</option>
-                <option>Drama</option>
-                <option>Comedy</option>
-                <option>Thriller</option>
-                <option>Sci-Fi</option>
-                <option>Fantasy</option>
+                <option value="N/A">N/A</option>
+                <option value="Drama">Drama</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Thriller">Thriller</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Fantasy">Fantasy</option>
               </select>
             </div>
             <div>
               <label for="length" class="mb-1 block text-sm font-medium text-slate-700">Length</label>
               <select id="length"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
-                <option>N/A</option>
-                <option>Short Film</option>
-                <option>Feature</option>
-                <option>Pilot</option>
-                <option>Episode</option>
-                <option>Other</option>
+                <option value="N/A">N/A</option>
+                <option value="Short Film">Short Film</option>
+                <option value="Feature">Feature</option>
+                <option value="Pilot">Pilot</option>
+                <option value="Episode">Episode</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div>
               <label for="mood" class="mb-1 block text-sm font-medium text-slate-700">Mood / Tone</label>
-              <input id="mood" type="text" placeholder="Coming-of-age drama"
-                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none" />
+              <select id="mood"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option value="N/A">N/A</option>
+                <option value="Reflective">Reflective</option>
+                <option value="Coming-of-age">Coming-of-age</option>
+                <option value="Introspective">Introspective</option>
+                <option value="Hopeful">Hopeful</option>
+                <option value="Somber">Somber</option>
+                <option value="Tense">Tense</option>
+              </select>
             </div>
             <div>
               <label for="audience" class="mb-1 block text-sm font-medium text-slate-700">Target Audience</label>
@@ -98,8 +106,18 @@
             </div>
             <div>
               <label for="setting" class="mb-1 block text-sm font-medium text-slate-700">Setting</label>
-              <input id="setting" type="text" placeholder="Urban dystopia"
-                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none" />
+              <select id="setting"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-400 focus:bg-white focus:outline-none">
+                <option value="N/A">N/A</option>
+                <option value="Wilderness">Wilderness</option>
+                <option value="Coastal">Coastal</option>
+                <option value="Outer Space">Outer Space</option>
+                <option value="Urban">Urban</option>
+                <option value="Arid">Arid / Desert</option>
+                <option value="Mountainous">Mountainous</option>
+                <option value="Stormy">Stormy / Rain-soaked</option>
+                <option value="War-torn">War-torn / Conflict Zone</option>
+              </select>
             </div>
           </div>
         </div>
@@ -159,6 +177,11 @@
     const overallScoreEl = document.getElementById('overallScore');
     const overallSummaryEl = document.getElementById('overallSummary');
     const rulesList = document.getElementById('rulesList');
+    const genreField = document.getElementById('genre');
+    const lengthField = document.getElementById('length');
+    const moodField = document.getElementById('mood');
+    const audienceField = document.getElementById('audience');
+    const settingField = document.getElementById('setting');
 
     const CATEGORY_SPECS = [
       { id: 'emotion', label: 'Emotion' },
@@ -222,6 +245,23 @@
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       wordCount.textContent = `${words} words`;
     };
+
+    const normalizeMetadataValue = (value) => {
+      if (typeof value !== 'string') return null;
+      const cleaned = value.trim();
+      if (!cleaned || cleaned === 'N/A') {
+        return null;
+      }
+      return cleaned;
+    };
+
+    const collectMetadata = () => ({
+      genre: normalizeMetadataValue(genreField.value),
+      length: normalizeMetadataValue(lengthField.value),
+      mood: normalizeMetadataValue(moodField.value),
+      audience: normalizeMetadataValue(audienceField.value),
+      setting: normalizeMetadataValue(settingField.value)
+    });
 
     const renderRules = (breakdown = null) => {
       rulesList.innerHTML = rules.map(rule => {
@@ -305,7 +345,10 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({
+          text,
+          metadata: collectMetadata()
+        })
       })
         .then(async (response) => {
           const payload = await response.json();
