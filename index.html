@@ -192,7 +192,7 @@
         description: 'Adjust tone, pacing, and language style based on the intended audience.'
       },
       {
-        title: 'Conflict and Resolution Rule',
+        title: 'Conflict & Resolution Rule',
         description: 'Every narrative must contain tension that challenges the protagonist and culminates in a meaningful resolution.'
       },
       {
@@ -238,26 +238,23 @@
     };
 
     const renderScores = (scores) => {
-      scoresGrid.innerHTML = scores.map(({ category, score, raw_score, max_points, message }) => `
+      scoresGrid.innerHTML = scores.map(({ category, raw_score, max_points, message }) => {
+        const scoreDisplay = typeof raw_score === 'number' ? raw_score.toFixed(1).replace(/\.0$/, '') : raw_score;
+        const maxDisplay = typeof max_points === 'number' ? max_points : '—';
+        return `
         <article class="flex flex-col rounded-2xl border border-slate-200 p-4 shadow-sm">
           <p class="text-sm font-semibold text-slate-900">${category}</p>
-          <p class="mt-2 text-3xl font-bold text-indigo-600">${typeof score === 'number' ? score.toFixed(1) : score} / 10</p>
-          <p class="mt-1 text-xs text-slate-500">
-            ${
-              typeof raw_score === 'number' && typeof max_points === 'number'
-                ? `Rule score: ${raw_score} / ${max_points}`
-                : 'Awaiting analysis.'
-            }
-          </p>
+          <p class="mt-2 text-3xl font-bold text-indigo-600">${scoreDisplay} / ${maxDisplay}</p>
+          <p class="mt-1 text-xs text-slate-500">Rule points</p>
           <p class="mt-2 text-sm text-slate-600">${message ?? `Feedback on ${category} will appear here.`}</p>
         </article>
-      `).join('');
+        `;
+      }).join('');
     };
 
     const renderScoresFromResult = (categories = []) => {
       renderScores(categories.map(item => ({
         category: item.category,
-        score: item.score,
         message: item.message,
         raw_score: item.raw_score,
         max_points: item.max_points
@@ -338,8 +335,7 @@
     renderRules();
     renderScores(CATEGORY_SPECS.map(spec => ({
       category: spec.label,
-      score: '—',
-      raw_score: null,
+      raw_score: '—',
       max_points: null,
       message: 'Awaiting analysis.'
     })));
