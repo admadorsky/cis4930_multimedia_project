@@ -41,7 +41,6 @@ python -m pip install --user Flask flask-cors pytest
 python -m pytest -q
 
 ## Project Structure
-
 ```
 cis4930_multimedia_project/
 ├── main.py                # Flask API + scoring engine
