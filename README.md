@@ -30,7 +30,7 @@
 
 ### Running the test cases (Codespaces quick path)
 
-Skip virtualenv and use the system Python. From the repo root:
+From the repo root:
 
 ```bash
 cd /workspaces/cis4930_multimedia_project
