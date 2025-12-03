@@ -85,7 +85,20 @@ def _score_story(text: str) -> Tuple[int, Dict[str, Dict[str, str]]]:
 
     # --------------------------
     # 2. Character Depth Rule
-    characters = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+    characters = []
+    seen_character_keys = set()
+    for ent in doc.ents:
+        if ent.label_ != "PERSON":
+            continue
+        name = ent.text.strip()
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen_character_keys:
+            continue
+        seen_character_keys.add(key)
+        characters.append(name)
+
     if characters:
         actions_detected = any(any(tok.pos_ == "VERB" for tok in sent) for sent in sentence_spans)
         if actions_detected:
